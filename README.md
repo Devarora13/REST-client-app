@@ -83,7 +83,7 @@ Note: The database schema will be automatically created on first run.
 
 - **Search**: Use the search bar to find requests by URL or response content
 - **Filter**: Filter by HTTP method or response status
-- **Load More**: Click "Load More" to fetch additional history items
+- **Pagination**: Navigate through history using Previous/Next buttons or page numbers
 - **Reuse**: Click any history item to reload it into the request form
 
 ### Performance Features
