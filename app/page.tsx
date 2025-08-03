@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { Clock, Send, Trash2, ChevronLeft, ChevronRight, Zap, Globe, History, Code2, Loader2, Search, Filter } from "lucide-react"
+import { Clock, Send, Trash2, ChevronLeft, ChevronRight, Zap, Globe, History, Code2, Loader2, Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 interface RequestHistory {
@@ -48,18 +48,17 @@ export default function RestClient() {
   const [statusFilter, setStatusFilter] = useState("ALL_STATUS")
   const [methodFilter, setMethodFilter] = useState("ALL_METHODS")
   
-  // Cache for storing history data to avoid redundant API calls
+    
+  // History cache
   const [historyCache, setHistoryCache] = useState<Map<string, { data: RequestHistory[], totalPages: number, timestamp: number }>>(new Map())
-  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes cache
+  const CACHE_DURATION = 5 * 60 * 1000
 
   const fetchHistory = async (page = 1, reset = false) => {
     setHistoryLoading(true)
     try {
-      // Create cache key based on current filters and page
       const cacheKey = `${page}-${searchTerm}-${methodFilter}-${statusFilter}`
       const now = Date.now()
       
-      // Check cache first
       const cachedData = historyCache.get(cacheKey)
       if (cachedData && !reset && (now - cachedData.timestamp) < CACHE_DURATION) {
         setHistory(cachedData.data)
@@ -71,7 +70,7 @@ export default function RestClient() {
       
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: "3", // 3 items per page
+        limit: "3",
       })
       
       if (searchTerm) params.append("search", searchTerm)
@@ -81,7 +80,6 @@ export default function RestClient() {
       const res = await fetch(`/api/history?${params}`)
       const data = await res.json()
       
-      // Update cache with new data
       const newCache = new Map(historyCache)
       newCache.set(cacheKey, {
         data: data.requests,
@@ -90,7 +88,6 @@ export default function RestClient() {
       })
       setHistoryCache(newCache)
       
-      // Always replace history for page-based pagination
       setHistory(data.requests)
       setTotalPages(data.totalPages)
       setHistoryPage(page)
@@ -109,12 +106,11 @@ export default function RestClient() {
     fetchHistory(1)
   }, [])
 
-  // Reset history when filters change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setHistoryPage(1)
       fetchHistory(1)
-    }, 300) // Debounce search
+    }, 300)
     
     return () => clearTimeout(timeoutId)
   }, [searchTerm, methodFilter, statusFilter])
@@ -170,9 +166,8 @@ export default function RestClient() {
 
       setResponse(data)
       
-      // Clear cache when new request is made to ensure fresh data
       setHistoryCache(new Map())
-      fetchHistory(1, true) // Refresh history after new request with cache reset
+      fetchHistory(1, true)
 
       toast({
         title: "Success",
@@ -199,7 +194,6 @@ export default function RestClient() {
     )
     setBody(item.body || "")
 
-    // Parse and set the response
     try {
       const responseData = JSON.parse(item.response)
       setResponse({
@@ -229,7 +223,6 @@ export default function RestClient() {
         setMethodFilter("ALL_METHODS")
         setStatusFilter("ALL_STATUS")
         
-        // Clear cache when history is cleared
         setHistoryCache(new Map())
         
         toast({

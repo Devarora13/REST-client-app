@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Math.min(Number.parseInt(searchParams.get("limit") || "3"), 50) // Default 3 items per page, max 50
+    const limit = Math.min(Number.parseInt(searchParams.get("limit") || "3"), 50)
     const method = searchParams.get("method")
     const status = searchParams.get("status")
     const search = searchParams.get("search")
@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
     const orm = await getORM()
     const em = orm.em.fork()
 
-    // Build filter conditions
     const where: any = {}
     
     if (method) {
@@ -45,7 +44,6 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / limit)
 
-    // Cache control headers for better performance
     const headers = new Headers()
     headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=30')
 
@@ -56,7 +54,7 @@ export async function GET(request: NextRequest) {
         url: req.url,
         headers: req.headers,
         body: req.body,
-        response: req.response.length > 1000 ? req.response.substring(0, 1000) + '...' : req.response, // Truncate large responses
+        response: req.response.length > 1000 ? req.response.substring(0, 1000) + '...' : req.response,
         status: req.status,
         responseTime: req.responseTime,
         createdAt: req.createdAt.toISOString(),

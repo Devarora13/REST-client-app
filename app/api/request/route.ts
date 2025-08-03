@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now()
 
-    // Make the actual HTTP request
     const fetchOptions: RequestInit = {
       method,
       headers: {
@@ -50,7 +49,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Save to database
     try {
       const orm = await getORM()
       const em = orm.em.fork()
@@ -68,10 +66,8 @@ export async function POST(request: NextRequest) {
       await em.persistAndFlush(requestHistory)
     } catch (dbError) {
       console.error("Failed to save request history:", dbError)
-      // Continue even if DB save fails
     }
 
-    // Return response
     return NextResponse.json({
       data: responseData,
       status: response.status,

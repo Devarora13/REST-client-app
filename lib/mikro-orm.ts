@@ -34,10 +34,9 @@ export async function getORM() {
         createRetryIntervalMillis: 100,
       },
       connect: true,
-      ensureDatabase: false, // Disable for Neon as database already exists
+      ensureDatabase: false, 
     })
 
-    // Run schema update on startup in development
     if (process.env.NODE_ENV === "development") {
       const generator = orm.getSchemaGenerator()
       await generator.updateSchema()
