@@ -49,9 +49,9 @@ export default function RestClient() {
   const [methodFilter, setMethodFilter] = useState("ALL_METHODS")
   
     
-  // History cache
+  // History cache with shorter duration for more responsive updates
   const [historyCache, setHistoryCache] = useState<Map<string, { data: RequestHistory[], totalPages: number, timestamp: number }>>(new Map())
-  const CACHE_DURATION = 5 * 60 * 1000
+  const CACHE_DURATION = 2 * 60 * 1000 // Reduced to 2 minutes
 
   const fetchHistory = async (page = 1, reset = false) => {
     setHistoryLoading(true)
@@ -166,8 +166,35 @@ export default function RestClient() {
 
       setResponse(data)
       
-      setHistoryCache(new Map())
-      fetchHistory(1, true)
+      // Optimistic update: add new request to history without refetching
+      const newHistoryItem: RequestHistory = {
+        id: Date.now(), // temporary ID
+        method,
+        url,
+        headers: parsedHeaders,
+        body: requestBody,
+        response: JSON.stringify(data.data),
+        status: data.status,
+        responseTime: data.responseTime,
+        createdAt: new Date().toISOString()
+      }
+      
+      // Update history state optimistically
+      setHistory(prevHistory => [newHistoryItem, ...prevHistory.slice(0, 2)]) // Keep only first 2 + new one
+      
+      // Invalidate only the first page cache for future fetches
+      const newCache = new Map(historyCache)
+      for (const [key] of newCache) {
+        if (key.startsWith('1-')) { // Only invalidate page 1 cache
+          newCache.delete(key)
+        }
+      }
+      setHistoryCache(newCache)
+      
+      // Refresh history from server after a short delay to get real ID
+      setTimeout(() => {
+        fetchHistory(1, true)
+      }, 1000)
 
       toast({
         title: "Success",
