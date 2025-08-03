@@ -178,8 +178,9 @@ export default function RestClient() {
 
       setResponse(data)
       
+      // Create optimistic history item
       const newHistoryItem: RequestHistory = {
-        id: Date.now(), // temporary ID
+        id: Math.random() * 1000000, // Better temporary ID to avoid conflicts
         method,
         url,
         headers: parsedHeaders,
@@ -190,27 +191,31 @@ export default function RestClient() {
         createdAt: new Date().toISOString()
       }
       
-      // Update history state optimistically
-      setHistory(prevHistory => [newHistoryItem, ...prevHistory.slice(0, 2)]) 
-      
-
-      const newCache = new Map(historyCache)
-      for (const [key] of newCache) {
-        if (key.startsWith('1-')) { 
-          newCache.delete(key)
-        }
+      if (historyPage === 1 && searchTerm === "" && methodFilter === "ALL_METHODS" && statusFilter === "ALL_STATUS") {
+        setHistory(prevHistory => [newHistoryItem, ...prevHistory])
       }
-      setHistoryCache(newCache)
       
-      // Refresh history from server after a short delay to get real ID
+      // Clear cache to ensure fresh data on next fetch
+      setHistoryCache(new Map())
+      
+      // Refresh history from server after a short delay to sync with real data
       setTimeout(() => {
-        fetchHistory(1, true)
-      }, 1000)
+        fetchHistory(historyPage, true)
+      }, 1500)
 
-      toast({
-        title: "Success",
-        description: `Request completed in ${data.responseTime}ms`,
-      })
+      // Show appropriate toast based on response status
+      if (data.status >= 400) {
+        toast({
+          title: "Request Completed",
+          description: `Request returned ${data.status} status (${data.responseTime}ms)`,
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Success",
+          description: `Request completed successfully in ${data.responseTime}ms`,
+        })
+      }
     } catch (error) {
       toast({
         title: "Error",
