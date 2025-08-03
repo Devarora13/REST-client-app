@@ -37,9 +37,13 @@ export async function getORM() {
       ensureDatabase: false, 
     })
 
-    if (process.env.NODE_ENV === "development") {
-      const generator = orm.getSchemaGenerator()
+    // Always ensure schema exists (both dev and production)
+    const generator = orm.getSchemaGenerator()
+    try {
       await generator.updateSchema()
+      console.log("Database schema updated successfully")
+    } catch (schemaError) {
+      console.log("Schema update error (might be expected):", schemaError)
     }
 
     console.log("Database connected successfully")
