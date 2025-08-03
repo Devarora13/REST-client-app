@@ -161,7 +161,6 @@ export default function RestClient() {
       const data = await res.json()
 
       if (!res.ok) {
-        // For API errors, still show the error response in the response panel
         setResponse({
           data: data.error || "Request failed",
           status: res.status,
@@ -179,7 +178,6 @@ export default function RestClient() {
 
       setResponse(data)
       
-      // Optimistic update: add new request to history without refetching
       const newHistoryItem: RequestHistory = {
         id: Date.now(), // temporary ID
         method,
@@ -193,12 +191,12 @@ export default function RestClient() {
       }
       
       // Update history state optimistically
-      setHistory(prevHistory => [newHistoryItem, ...prevHistory.slice(0, 2)]) // Keep only first 2 + new one
+      setHistory(prevHistory => [newHistoryItem, ...prevHistory.slice(0, 2)]) 
       
-      // Invalidate only the first page cache for future fetches
+
       const newCache = new Map(historyCache)
       for (const [key] of newCache) {
-        if (key.startsWith('1-')) { // Only invalidate page 1 cache
+        if (key.startsWith('1-')) { 
           newCache.delete(key)
         }
       }
@@ -280,7 +278,7 @@ export default function RestClient() {
   }
 
   const getStatusColor = (status: number) => {
-    if (status === 0) return "bg-gray-600 text-white border-gray-500" // Network/connection errors
+    if (status === 0) return "bg-gray-600 text-white border-gray-500"
     if (status >= 200 && status < 300) return "bg-green-600 text-white border-green-500"
     if (status >= 300 && status < 400) return "bg-yellow-600 text-white border-yellow-500"
     if (status >= 400 && status < 500) return "bg-orange-600 text-white border-orange-500"

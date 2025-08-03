@@ -42,7 +42,6 @@ export async function POST(request: NextRequest) {
       responseTime = Date.now() - startTime
       const errorMessage = fetchError instanceof Error ? fetchError.message : "Unknown error"
       
-      // Store failed request in history as well
       try {
         const orm = await getORM()
         const em = orm.em.fork()
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
         requestHistory.headers = headers || {}
         requestHistory.body = body || null
         requestHistory.response = errorMessage
-        requestHistory.status = 0 // Use 0 to indicate network/connection error
+        requestHistory.status = 0 
         requestHistory.responseTime = responseTime
         requestHistory.createdAt = new Date()
 
