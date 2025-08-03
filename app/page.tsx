@@ -53,7 +53,7 @@ export default function RestClient() {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: "10",
+        limit: "3", // 3 items per page
       })
       
       if (searchTerm) params.append("search", searchTerm)
@@ -63,12 +63,8 @@ export default function RestClient() {
       const res = await fetch(`/api/history?${params}`)
       const data = await res.json()
       
-      if (reset) {
-        setHistory(data.requests)
-      } else {
-        setHistory(prev => page === 1 ? data.requests : [...prev, ...data.requests])
-      }
-      
+      // Always replace history for page-based pagination
+      setHistory(data.requests)
       setTotalPages(data.totalPages)
       setHistoryPage(page)
     } catch (error) {
@@ -83,18 +79,14 @@ export default function RestClient() {
   }
 
   useEffect(() => {
-    fetchHistory(1, true)
+    fetchHistory(1)
   }, [])
 
   // Reset history when filters change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (historyPage === 1) {
-        fetchHistory(1, true)
-      } else {
-        setHistoryPage(1)
-        fetchHistory(1, true)
-      }
+      setHistoryPage(1)
+      fetchHistory(1)
     }, 300) // Debounce search
     
     return () => clearTimeout(timeoutId)
@@ -150,7 +142,7 @@ export default function RestClient() {
       }
 
       setResponse(data)
-      fetchHistory(1, true) // Refresh history after new request
+      fetchHistory(1) // Refresh history after new request
 
       toast({
         title: "Success",
@@ -276,15 +268,15 @@ export default function RestClient() {
                 {/* URL Input Row */}
                 <div className="flex gap-3 mb-6">
                   <Select value={method} onValueChange={setMethod}>
-                    <SelectTrigger className="w-32 bg-gray-800 border-gray-700 text-white">
+                    <SelectTrigger className="w-32 bg-gray-800 border-gray-700 text-gray-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="GET">GET</SelectItem>
-                      <SelectItem value="POST">POST</SelectItem>
-                      <SelectItem value="PUT">PUT</SelectItem>
-                      <SelectItem value="DELETE">DELETE</SelectItem>
-                      <SelectItem value="PATCH">PATCH</SelectItem>
+                      <SelectItem value="GET" className="text-gray-200 hover:bg-gray-700">GET</SelectItem>
+                      <SelectItem value="POST" className="text-gray-200 hover:bg-gray-700">POST</SelectItem>
+                      <SelectItem value="PUT" className="text-gray-200 hover:bg-gray-700">PUT</SelectItem>
+                      <SelectItem value="DELETE" className="text-gray-200 hover:bg-gray-700">DELETE</SelectItem>
+                      <SelectItem value="PATCH" className="text-gray-200 hover:bg-gray-700">PATCH</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input
@@ -306,10 +298,10 @@ export default function RestClient() {
                 {/* Headers and Body Tabs */}
                 <Tabs defaultValue="headers" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                    <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700">
+                    <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700 data-[state=active]:!text-white text-gray-300">
                       Headers
                     </TabsTrigger>
-                    <TabsTrigger value="body" className="data-[state=active]:bg-gray-700">
+                    <TabsTrigger value="body" className="data-[state=active]:bg-gray-700 data-[state=active]:!text-white text-gray-300">
                       Body
                     </TabsTrigger>
                   </TabsList>
@@ -320,7 +312,7 @@ export default function RestClient() {
                       </Label>
                       <Textarea
                         id="headers"
-                        placeholder="Content-Type: application/json&#10;Authorization: Bearer token"
+                        placeholder="Content-Type: application/json &#10;Authorization: Bearer token"
                         value={headers}
                         onChange={(e) => setHeaders(e.target.value)}
                         rows={4}
@@ -390,7 +382,7 @@ export default function RestClient() {
                     size="sm"
                     onClick={clearHistory}
                     disabled={!history || history.length === 0}
-                    className="text-gray-400 hover:text-white hover:bg-gray-800"
+                    className="text-gray-300 hover:text-white hover:bg-gray-800"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -410,34 +402,34 @@ export default function RestClient() {
                   </div>
                   <div className="flex gap-2">
                     <Select value={methodFilter} onValueChange={setMethodFilter}>
-                      <SelectTrigger className="flex-1 bg-gray-800 border-gray-700 text-white">
+                      <SelectTrigger className="flex-1 bg-gray-800 border-gray-700 text-gray-200">
                         <SelectValue placeholder="Method" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-gray-700">
-                        <SelectItem value="ALL_METHODS">All Methods</SelectItem>
-                        <SelectItem value="GET">GET</SelectItem>
-                        <SelectItem value="POST">POST</SelectItem>
-                        <SelectItem value="PUT">PUT</SelectItem>
-                        <SelectItem value="DELETE">DELETE</SelectItem>
-                        <SelectItem value="PATCH">PATCH</SelectItem>
+                        <SelectItem value="ALL_METHODS" className="text-gray-200 hover:bg-gray-700">All Methods</SelectItem>
+                        <SelectItem value="GET" className="text-gray-200 hover:bg-gray-700">GET</SelectItem>
+                        <SelectItem value="POST" className="text-gray-200 hover:bg-gray-700">POST</SelectItem>
+                        <SelectItem value="PUT" className="text-gray-200 hover:bg-gray-700">PUT</SelectItem>
+                        <SelectItem value="DELETE" className="text-gray-200 hover:bg-gray-700">DELETE</SelectItem>
+                        <SelectItem value="PATCH" className="text-gray-200 hover:bg-gray-700">PATCH</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="flex-1 bg-gray-800 border-gray-700 text-white">
+                      <SelectTrigger className="flex-1 bg-gray-800 border-gray-700 text-gray-200">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-gray-700">
-                        <SelectItem value="ALL_STATUS">All Status</SelectItem>
-                        <SelectItem value="200">2xx Success</SelectItem>
-                        <SelectItem value="300">3xx Redirect</SelectItem>
-                        <SelectItem value="400">4xx Client Error</SelectItem>
-                        <SelectItem value="500">5xx Server Error</SelectItem>
+                        <SelectItem value="ALL_STATUS" className="text-gray-200 hover:bg-gray-700">All Status</SelectItem>
+                        <SelectItem value="200" className="text-gray-200 hover:bg-gray-700">2xx Success</SelectItem>
+                        <SelectItem value="300" className="text-gray-200 hover:bg-gray-700">3xx Redirect</SelectItem>
+                        <SelectItem value="400" className="text-gray-200 hover:bg-gray-700">4xx Client Error</SelectItem>
+                        <SelectItem value="500" className="text-gray-200 hover:bg-gray-700">5xx Server Error</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                <ScrollArea className="h-96">
+                <ScrollArea>
                   {historyLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
@@ -445,15 +437,15 @@ export default function RestClient() {
                   ) : !history || history.length === 0 ? (
                     <div className="text-center py-8">
                       <Clock className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                      <p className="text-gray-400 mb-1">No requests yet</p>
-                      <p className="text-gray-500 text-sm">Your request history will appear here</p>
+                      <p className="text-gray-300 mb-1">No requests yet</p>
+                      <p className="text-gray-400 text-sm">Your request history will appear here</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {history.map((item) => (
                         <div
                           key={item.id}
-                          className="p-3 bg-gray-800 border border-gray-700 rounded-lg cursor-pointer hover:bg-gray-750 hover:border-gray-600 transition-all duration-200"
+                          className="p-3 bg-gray-800 border border-gray-700 rounded-lg cursor-pointer hover:bg-gray-700 hover:border-gray-600 transition-all duration-200"
                           onClick={() => loadHistoryItem(item)}
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -465,38 +457,78 @@ export default function RestClient() {
                                 {item.status}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-400">
+                            <div className="flex items-center gap-1 text-xs text-gray-300">
                               <Clock className="w-3 h-3" />
                               {item.responseTime}ms
                             </div>
                           </div>
-                          <p className="text-sm text-white font-medium truncate mb-1">{item.url}</p>
-                          <p className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString()}</p>
+                          <p className="text-sm text-gray-100 font-medium truncate mb-1">{item.url}</p>
+                          <p className="text-xs text-gray-400">{new Date(item.createdAt).toLocaleString()}</p>
                         </div>
                       ))}
-                      
-                      {/* Load More Button */}
-                      {historyPage < totalPages && (
-                        <div className="pt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fetchHistory(historyPage + 1)}
-                            disabled={historyLoading}
-                            className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                          >
-                            {historyLoading ? (
-                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4 mr-2" />
-                            )}
-                            Load More
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   )}
                 </ScrollArea>
+
+                {/* Page Navigation */}
+                {totalPages > 1 && (
+                  <>
+                    <Separator className="my-4 bg-gray-800" />
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fetchHistory(historyPage - 1)}
+                        disabled={historyPage <= 1 || historyLoading}
+                        className="border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white hover:border-gray-500"
+                      >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                          const pageNum = i + 1;
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={historyPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => fetchHistory(pageNum)}
+                              disabled={historyLoading}
+                              className={
+                                historyPage === pageNum
+                                  ? "bg-blue-600 text-white border-blue-500 hover:bg-blue-700"
+                                  : "border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white hover:border-gray-500"
+                              }
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                        {totalPages > 5 && (
+                          <>
+                            <span className="text-gray-400">...</span>
+                            <span className="text-sm text-gray-300">
+                              Page {historyPage} of {totalPages}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fetchHistory(historyPage + 1)}
+                        disabled={historyPage >= totalPages || historyLoading}
+                        className="border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white hover:border-gray-500"
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

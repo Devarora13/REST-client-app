@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Math.min(Number.parseInt(searchParams.get("limit") || "10"), 50) // Max 50 items per page
+    const limit = Math.min(Number.parseInt(searchParams.get("limit") || "3"), 50) // Default 3 items per page, max 50
     const method = searchParams.get("method")
     const status = searchParams.get("status")
     const search = searchParams.get("search")

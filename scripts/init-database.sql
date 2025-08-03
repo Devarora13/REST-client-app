@@ -1,13 +1,3 @@
--- Initialize PostgreSQL database for REST Client
--- Run this script to create the database and set up the schema
-
--- Create database (run this as postgres superuser)
--- CREATE DATABASE rest_client_db;
--- CREATE USER rest_client_user WITH PASSWORD 'your_secure_password';
--- GRANT ALL PRIVILEGES ON DATABASE rest_client_db TO rest_client_user;
-
--- Connect to the database
--- \c rest_client_db;
 
 -- Create the request_history table
 CREATE TABLE IF NOT EXISTS request_history (
