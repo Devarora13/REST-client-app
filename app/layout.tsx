@@ -8,8 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "REST Client",
-  description: "A Postman-like REST API client built with Next.js",
-    generator: 'v0.dev'
+  description: "A Postman-like REST API client built with Next.js"
 }
 
 export default function RootLayout({

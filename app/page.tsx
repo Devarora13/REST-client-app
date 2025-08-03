@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { Clock, Send, Trash2, ChevronLeft, ChevronRight, Zap, Globe, History, Code2, Loader2 } from "lucide-react"
+import { Clock, Send, Trash2, ChevronLeft, ChevronRight, Zap, Globe, History, Code2, Loader2, Search, Filter } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 interface RequestHistory {
@@ -44,13 +44,31 @@ export default function RestClient() {
   const [historyPage, setHistoryPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("ALL_STATUS")
+  const [methodFilter, setMethodFilter] = useState("ALL_METHODS")
 
-  const fetchHistory = async (page = 1) => {
+  const fetchHistory = async (page = 1, reset = false) => {
     setHistoryLoading(true)
     try {
-      const res = await fetch(`/api/history?page=${page}&limit=10`)
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+      })
+      
+      if (searchTerm) params.append("search", searchTerm)
+      if (methodFilter && methodFilter !== "ALL_METHODS") params.append("method", methodFilter)
+      if (statusFilter && statusFilter !== "ALL_STATUS") params.append("status", statusFilter)
+      
+      const res = await fetch(`/api/history?${params}`)
       const data = await res.json()
-      setHistory(data.requests)
+      
+      if (reset) {
+        setHistory(data.requests)
+      } else {
+        setHistory(prev => page === 1 ? data.requests : [...prev, ...data.requests])
+      }
+      
       setTotalPages(data.totalPages)
       setHistoryPage(page)
     } catch (error) {
@@ -65,8 +83,22 @@ export default function RestClient() {
   }
 
   useEffect(() => {
-    fetchHistory()
+    fetchHistory(1, true)
   }, [])
+
+  // Reset history when filters change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (historyPage === 1) {
+        fetchHistory(1, true)
+      } else {
+        setHistoryPage(1)
+        fetchHistory(1, true)
+      }
+    }, 300) // Debounce search
+    
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, methodFilter, statusFilter])
 
   const parseHeaders = (headerString: string): Record<string, string> => {
     const headers: Record<string, string> = {}
@@ -118,7 +150,7 @@ export default function RestClient() {
       }
 
       setResponse(data)
-      fetchHistory() // Refresh history after new request
+      fetchHistory(1, true) // Refresh history after new request
 
       toast({
         title: "Success",
@@ -171,6 +203,9 @@ export default function RestClient() {
         setHistory([])
         setHistoryPage(1)
         setTotalPages(1)
+        setSearchTerm("")
+        setMethodFilter("ALL_METHODS")
+        setStatusFilter("ALL_STATUS")
         toast({
           title: "Success",
           description: "Request history cleared",
@@ -354,7 +389,7 @@ export default function RestClient() {
                     variant="ghost"
                     size="sm"
                     onClick={clearHistory}
-                    disabled={history.length === 0}
+                    disabled={!history || history.length === 0}
                     className="text-gray-400 hover:text-white hover:bg-gray-800"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -362,12 +397,52 @@ export default function RestClient() {
                 </div>
               </CardHeader>
               <CardContent className="p-4">
+                {/* Search and Filter Controls */}
+                <div className="space-y-3 mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Search requests..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={methodFilter} onValueChange={setMethodFilter}>
+                      <SelectTrigger className="flex-1 bg-gray-800 border-gray-700 text-white">
+                        <SelectValue placeholder="Method" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectItem value="ALL_METHODS">All Methods</SelectItem>
+                        <SelectItem value="GET">GET</SelectItem>
+                        <SelectItem value="POST">POST</SelectItem>
+                        <SelectItem value="PUT">PUT</SelectItem>
+                        <SelectItem value="DELETE">DELETE</SelectItem>
+                        <SelectItem value="PATCH">PATCH</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="flex-1 bg-gray-800 border-gray-700 text-white">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectItem value="ALL_STATUS">All Status</SelectItem>
+                        <SelectItem value="200">2xx Success</SelectItem>
+                        <SelectItem value="300">3xx Redirect</SelectItem>
+                        <SelectItem value="400">4xx Client Error</SelectItem>
+                        <SelectItem value="500">5xx Server Error</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <ScrollArea className="h-96">
                   {historyLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
                     </div>
-                  ) : history.length === 0 ? (
+                  ) : !history || history.length === 0 ? (
                     <div className="text-center py-8">
                       <Clock className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                       <p className="text-gray-400 mb-1">No requests yet</p>
@@ -399,40 +474,29 @@ export default function RestClient() {
                           <p className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString()}</p>
                         </div>
                       ))}
+                      
+                      {/* Load More Button */}
+                      {historyPage < totalPages && (
+                        <div className="pt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchHistory(historyPage + 1)}
+                            disabled={historyLoading}
+                            className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                          >
+                            {historyLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 mr-2" />
+                            )}
+                            Load More
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </ScrollArea>
-
-                {totalPages > 1 && (
-                  <>
-                    <Separator className="my-4 bg-gray-800" />
-                    <div className="flex items-center justify-between">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fetchHistory(historyPage - 1)}
-                        disabled={historyPage <= 1 || historyLoading}
-                        className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                      >
-                        <ChevronLeft className="w-4 h-4 mr-1" />
-                        Previous
-                      </Button>
-                      <span className="text-sm text-gray-400">
-                        Page {historyPage} of {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fetchHistory(historyPage + 1)}
-                        disabled={historyPage >= totalPages || historyLoading}
-                        className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                      >
-                        Next
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    </div>
-                  </>
-                )}
               </CardContent>
             </Card>
           </div>

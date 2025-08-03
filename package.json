@@ -1,12 +1,16 @@
 {
-  "name": "my-v0-project",
+  "name": "rest-client",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "db:init": "echo 'Database will be auto-created by MikroORM'",
+    "db:reset": "echo 'Use Neon dashboard to reset database'",
+    "setup": "node scripts/setup-dev.js",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
