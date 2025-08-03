@@ -47,10 +47,28 @@ export default function RestClient() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("ALL_STATUS")
   const [methodFilter, setMethodFilter] = useState("ALL_METHODS")
+  
+  // Cache for storing history data to avoid redundant API calls
+  const [historyCache, setHistoryCache] = useState<Map<string, { data: RequestHistory[], totalPages: number, timestamp: number }>>(new Map())
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes cache
 
   const fetchHistory = async (page = 1, reset = false) => {
     setHistoryLoading(true)
     try {
+      // Create cache key based on current filters and page
+      const cacheKey = `${page}-${searchTerm}-${methodFilter}-${statusFilter}`
+      const now = Date.now()
+      
+      // Check cache first
+      const cachedData = historyCache.get(cacheKey)
+      if (cachedData && !reset && (now - cachedData.timestamp) < CACHE_DURATION) {
+        setHistory(cachedData.data)
+        setTotalPages(cachedData.totalPages)
+        setHistoryPage(page)
+        setHistoryLoading(false)
+        return
+      }
+      
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "3", // 3 items per page
@@ -62,6 +80,15 @@ export default function RestClient() {
       
       const res = await fetch(`/api/history?${params}`)
       const data = await res.json()
+      
+      // Update cache with new data
+      const newCache = new Map(historyCache)
+      newCache.set(cacheKey, {
+        data: data.requests,
+        totalPages: data.totalPages,
+        timestamp: now
+      })
+      setHistoryCache(newCache)
       
       // Always replace history for page-based pagination
       setHistory(data.requests)
@@ -142,7 +169,10 @@ export default function RestClient() {
       }
 
       setResponse(data)
-      fetchHistory(1) // Refresh history after new request
+      
+      // Clear cache when new request is made to ensure fresh data
+      setHistoryCache(new Map())
+      fetchHistory(1, true) // Refresh history after new request with cache reset
 
       toast({
         title: "Success",
@@ -198,6 +228,10 @@ export default function RestClient() {
         setSearchTerm("")
         setMethodFilter("ALL_METHODS")
         setStatusFilter("ALL_STATUS")
+        
+        // Clear cache when history is cleared
+        setHistoryCache(new Map())
+        
         toast({
           title: "Success",
           description: "Request history cleared",
@@ -250,7 +284,7 @@ export default function RestClient() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
             REST Client Pro
           </h1>
-          <p className="text-gray-400 text-lg">A powerful REST API client with beautiful dark interface</p>
+          <p className="text-gray-400 text-lg">A powerful REST API client</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -312,7 +346,7 @@ export default function RestClient() {
                       </Label>
                       <Textarea
                         id="headers"
-                        placeholder="Content-Type: application/json &#10;Authorization: Bearer token"
+                        placeholder="Content-Type: application/json&#10;Authorization: Bearer token"
                         value={headers}
                         onChange={(e) => setHeaders(e.target.value)}
                         rows={4}
