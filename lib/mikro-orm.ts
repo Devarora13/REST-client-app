@@ -37,13 +37,30 @@ export async function getORM() {
       ensureDatabase: false, 
     })
 
-    // Always ensure schema exists (both dev and production)
-    const generator = orm.getSchemaGenerator()
-    try {
-      await generator.updateSchema()
-      console.log("Database schema updated successfully")
-    } catch (schemaError) {
-      console.log("Schema update error (might be expected):", schemaError)
+    // Handle schema creation/updates based on environment
+    if (!process.env.DISABLE_AUTO_SCHEMA) {
+      const generator = orm.getSchemaGenerator()
+      try {
+        if (process.env.NODE_ENV === "development") {
+          // In development, only create if doesn't exist
+          const schemaSQL = await generator.getCreateSchemaSQL()
+          if (schemaSQL.length > 0) {
+            console.log("Creating missing database schema for development...")
+            await generator.createSchema()
+            console.log("Database schema created successfully")
+          } else {
+            console.log("Development database schema already exists")
+          }
+        } else {
+          // In production, try to update safely
+          await generator.updateSchema()
+          console.log("Production database schema updated successfully")
+        }
+      } catch (schemaError) {
+        console.log("Schema operation info:", schemaError)
+      }
+    } else {
+      console.log("Auto-schema management disabled")
     }
 
     console.log("Database connected successfully")

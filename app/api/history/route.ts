@@ -22,7 +22,20 @@ export async function GET(request: NextRequest) {
     }
     
     if (status) {
-      where.status = Number.parseInt(status)
+      const statusCode = Number.parseInt(status)
+      // Handle status ranges (2xx, 3xx, 4xx, 5xx)
+      if (statusCode === 200) {
+        where.status = { $gte: 200, $lt: 300 } // 2xx range
+      } else if (statusCode === 300) {
+        where.status = { $gte: 300, $lt: 400 } // 3xx range
+      } else if (statusCode === 400) {
+        where.status = { $gte: 400, $lt: 500 } // 4xx range
+      } else if (statusCode === 500) {
+        where.status = { $gte: 500, $lt: 600 } // 5xx range
+      } else {
+        // For exact status codes (if needed)
+        where.status = statusCode
+      }
     }
     
     if (search) {
