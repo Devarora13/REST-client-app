@@ -40,9 +40,31 @@ export async function POST(request: NextRequest) {
       }
     } catch (fetchError) {
       responseTime = Date.now() - startTime
+      const errorMessage = fetchError instanceof Error ? fetchError.message : "Unknown error"
+      
+      // Store failed request in history as well
+      try {
+        const orm = await getORM()
+        const em = orm.em.fork()
+
+        const requestHistory = new RequestHistory()
+        requestHistory.method = method
+        requestHistory.url = url
+        requestHistory.headers = headers || {}
+        requestHistory.body = body || null
+        requestHistory.response = errorMessage
+        requestHistory.status = 0 // Use 0 to indicate network/connection error
+        requestHistory.responseTime = responseTime
+        requestHistory.createdAt = new Date()
+
+        await em.persistAndFlush(requestHistory)
+      } catch (dbError) {
+        console.error("Failed to save failed request history:", dbError)
+      }
+
       return NextResponse.json(
         {
-          error: `Request failed: ${fetchError instanceof Error ? fetchError.message : "Unknown error"}`,
+          error: `Request failed: ${errorMessage}`,
           responseTime,
         },
         { status: 500 },

@@ -161,7 +161,20 @@ export default function RestClient() {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || "Request failed")
+        // For API errors, still show the error response in the response panel
+        setResponse({
+          data: data.error || "Request failed",
+          status: res.status,
+          headers: {},
+          responseTime: data.responseTime || 0,
+        })
+        
+        toast({
+          title: "Request Failed",
+          description: data.error || "Request failed",
+          variant: "destructive",
+        })
+        return
       }
 
       setResponse(data)
@@ -267,6 +280,7 @@ export default function RestClient() {
   }
 
   const getStatusColor = (status: number) => {
+    if (status === 0) return "bg-gray-600 text-white border-gray-500" // Network/connection errors
     if (status >= 200 && status < 300) return "bg-green-600 text-white border-green-500"
     if (status >= 300 && status < 400) return "bg-yellow-600 text-white border-yellow-500"
     if (status >= 400 && status < 500) return "bg-orange-600 text-white border-orange-500"
@@ -413,8 +427,15 @@ export default function RestClient() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <ScrollArea className="h-96">
-                    <pre className="p-4 bg-gray-950 text-green-400 font-mono text-sm leading-relaxed overflow-scroll">
-                      {typeof response.data === "string" ? response.data : JSON.stringify(response.data, null, 2)}
+                    <pre 
+                      className={`p-4 bg-gray-950 font-mono text-sm leading-relaxed overflow-auto ${
+                        response.status >= 400 ? 'text-red-400' : 'text-green-400'
+                      }`}
+                    >
+                      {typeof response.data === "string" 
+                        ? response.data 
+                        : JSON.stringify(response.data, null, 2)
+                      }
                     </pre>
                   </ScrollArea>
                 </CardContent>
