@@ -413,7 +413,7 @@ export default function RestClient() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <ScrollArea className="h-96">
-                    <pre className="p-4 bg-gray-950 text-green-400 font-mono text-sm leading-relaxed overflow-auto">
+                    <pre className="p-4 bg-gray-950 text-green-400 font-mono text-sm leading-relaxed overflow-scroll">
                       {typeof response.data === "string" ? response.data : JSON.stringify(response.data, null, 2)}
                     </pre>
                   </ScrollArea>
