@@ -1,9 +1,8 @@
 {
   "functions": {
     "app/api/**/*.ts": {
-      "maxDuration": 30,
-      "memory": 512
+      "maxDuration": 30
     }
   },
-  "regions": ["hnd1", "bom1", "sin1", "syd1"]
+  "regions": ["hnd1"]
 }
