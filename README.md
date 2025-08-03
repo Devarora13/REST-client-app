@@ -48,7 +48,7 @@ A powerful REST API client built with Next.js, featuring a beautiful dark interf
 
 3. **Configure Database**
    
-   Create a free account at [Neon](https://neon.tech) and get your connection string.
+   Create a free account at [Neon](https://neon.com) and get your connection string.
    
    Create `.env.local`:
    ```env
@@ -239,6 +239,5 @@ Note: The application automatically handles schema creation in production.
 
 ---
 
-🌐 **Live Demo**: [View on Vercel](https://rest-client-app-devarora13s-projects.vercel.app)
+🌐 **Live Demo**: [View on Vercel](https://rest-client-app-jet.vercel.app/)
 
-Built with ❤️ using Next.js 15, React 19, and Neon PostgreSQL
