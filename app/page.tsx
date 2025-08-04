@@ -429,9 +429,9 @@ export default function RestClient() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-96">
+                  <div className="h-96 overflow-auto border-t border-gray-800">
                     <pre 
-                      className={`p-4 bg-gray-950 font-mono text-sm leading-relaxed overflow-auto ${
+                      className={`p-4 bg-gray-950 font-mono text-sm leading-relaxed whitespace-pre block min-w-max ${
                         response.status >= 400 ? 'text-red-400' : 'text-green-400'
                       }`}
                     >
@@ -440,7 +440,7 @@ export default function RestClient() {
                         : JSON.stringify(response.data, null, 2)
                       }
                     </pre>
-                  </ScrollArea>
+                  </div>
                 </CardContent>
               </Card>
             )}
