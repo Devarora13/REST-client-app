@@ -38,7 +38,8 @@ export async function getORM() {
     })
 
     // Handle schema creation/updates based on environment
-    if (!process.env.DISABLE_AUTO_SCHEMA) {
+    const isSchemaDisabled = process.env.DISABLE_AUTO_SCHEMA === 'true'
+    if (!isSchemaDisabled) {
       const generator = orm.getSchemaGenerator()
       try {
         if (process.env.NODE_ENV === "development") {
